@@ -3556,10 +3556,10 @@ lru-cache@^5.1.1:
   dependencies:
     yallist "^3.0.2"
 
-lrz@^4.9.40:
-  version "4.9.40"
-  resolved "https://registry.yarnpkg.com/lrz/-/lrz-4.9.40.tgz#2fd3b42588a20a57fd7aa79f81568c845e4e3d73"
-  integrity sha1-L9O0JYiiClf9eqefgVaMhF5OPXM=
+lrz@4.9.41:
+  version "4.9.41"
+  resolved "https://r2.cnpmjs.org/lrz/-/lrz-4.9.41.tgz#3d51b13d8dde63775bd8ba3af80d999b603e19ec"
+  integrity sha512-fCRx419zPeNjvZYMHkw0kD93WKpkCRxku+hj6+voItn6Ur6bGqaVa6pPb9C93/vq57cgMGs5R/w8gZj2KuBu3g==
   dependencies:
     gulp-insert "^0.5.0"
     gulp-rename "^1.2.2"

@@ -1,6 +1,6 @@
 import Hammer from 'hammerjs';
 import IScroll from 'iscroll/build/iscroll-zoom';
-import lrz from 'lrz';
+import lrz from 'lrz'; // https://github.com/think2011/localResizeIMG
 import bind from '@module-factory/utils/bind';
 import destroy from '@module-factory/utils/destroy';
 import extend from '@module-factory/utils/extend';
@@ -15,6 +15,16 @@ import css from '@module-factory/utils/css';
 import attr from '@module-factory/utils/attr';
 import $ from '@module-factory/utils/$';
 import * as utils from './utils';
+
+
+/*
+    基于 Webpack 的模块工厂-模块开发脚手架 https://github.com/baijunjie/module-factory
+    module-factory 创建脚手架的命令行工具
+    @module-factory/service 开发和构建服务模块
+    @module-factory/template 创建初始化模板的模块
+    @module-factory/shared-utils 脚手架共享工具集
+    @module-factory/utils 模块开发工具集
+*/ 
 
 const is_mobile = !!navigator.userAgent.match(/mobile/i),
     is_android = !!navigator.userAgent.match(/android/i),
@@ -523,7 +533,7 @@ export default class PhotoClip {
             this._$moveLayer.addEventListener('dblclick', this._rotateCW90);
         }
     }
-
+    // TAG:旋转功能
     _rotateCW90(e) {
         this._rotateBy(90, this._iScroll.options.bounceTime, { x: e.clientX, y: e.clientY });
     }
@@ -741,7 +751,7 @@ export default class PhotoClip {
             });
         }
     }
-
+    // FIXME:上传图片
     _fileOnChangeHandle(e) {
         const files = e.target.files;
 
@@ -749,7 +759,7 @@ export default class PhotoClip {
             this._lrzHandle(files[0]);
         }
     }
-
+    // TAG:调用 lrz 库处理图像压缩
     _lrzHandle(src) {
         const options = this._options,
             errorMsg = options.errorMsg;
@@ -766,8 +776,15 @@ export default class PhotoClip {
             lrz(src, options.lrzOption)
                 .then(rst => {
                     // 处理成功会执行
+                    console.log("🚀 ~ file: index.js:783 ~ PhotoClip ~ _lrzHandle ~ rst:", rst)
                     this._clearImg();
                     this._createImg(rst.base64);
+                     // 修复图像方向
+                    // this._fixImageOrientation(rst.base64, rst.origin.exif).then(fixedBase64 => {
+                    //     console.log("🚀 ~ file: index.js:784 ~ PhotoClip ~ this._fixImageOrientation ~ fixedBase64:", fixedBase64)
+                    //     this._clearImg();
+                    //     this._createImg(fixedBase64);
+                    // });
                 })
                 .catch(err => {
                     // 处理失败会执行
@@ -777,6 +794,78 @@ export default class PhotoClip {
             options.loadError.call(this, errorMsg.imgHandleError, err);
             throw err;
         }
+    }
+
+    _fixImageOrientation(base64, exif) {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const width = img.width;
+            const height = img.height;
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // 根据 EXIF 信息中的 Orientation 修正图像方向
+            const orientation = exif.get('Orientation');
+            switch (orientation) {
+                case 2:
+                    // horizontal flip
+                    ctx.translate(width, 0);
+                    ctx.scale(-1, 1);
+                    break;
+                case 3:
+                    // 180° rotate left
+                    ctx.translate(width, height);
+                    ctx.rotate(Math.PI);
+                    break;
+                case 4:
+                    // vertical flip
+                    ctx.translate(0, height);
+                    ctx.scale(1, -1);
+                    break;
+                case 5:
+                    // vertical flip + 90 rotate right
+                    canvas.width = height;
+                    canvas.height = width;
+                    ctx.rotate(0.5 * Math.PI);
+                    ctx.scale(1, -1);
+                    break;
+                case 6:
+                    // 90° rotate right
+                    canvas.width = height;
+                    canvas.height = width;
+                    ctx.rotate(0.5 * Math.PI);
+                    ctx.translate(0, -height);
+                    break;
+                case 7:
+                    // horizontal flip + 90 rotate right
+                    canvas.width = height;
+                    canvas.height = width;
+                    ctx.rotate(0.5 * Math.PI);
+                    ctx.translate(width, -height);
+                    ctx.scale(-1, 1);
+                    break;
+                case 8:
+                    // 90° rotate left
+                    canvas.width = height;
+                    canvas.height = width;
+                    ctx.rotate(-0.5 * Math.PI);
+                    ctx.translate(-width, 0);
+                    break;
+                default:
+                    break;
+            }
+
+            ctx.drawImage(img, 0, 0);
+            const fixedBase64 = canvas.toDataURL('image/jpeg');
+
+            this._clearImg();
+            this._createImg(fixedBase64);
+        };
+
+        img.src = base64;
     }
 
     _clearImg() {
@@ -789,7 +878,7 @@ export default class PhotoClip {
         this._$img = null;
         this._imgLoaded = false;
     }
-
+    // 创建新图像
     _createImg(src) {
         const options = this._options,
             errorMsg = options.errorMsg;
@@ -826,15 +915,126 @@ export default class PhotoClip {
         attr(this._$img, 'src', src);
     }
 
-    _clipImg() {
+    _createImg1(src) {
         const options = this._options,
             errorMsg = options.errorMsg;
 
+        this._$img = new Image();
+
+        css(this._$img, {
+            'display': 'block',
+            'user-select': 'none',
+            'pointer-events': 'none'
+        });
+
+        this._$img.onload = e => {
+            console.log("🚀 ~ file: index.js:931 ~ PhotoClip ~ _createImg ~ e:", e)
+            const img = e.target;
+            this._imgLoaded = true;
+            // 创建一个临时canvas来修正图像方向
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const width = img.width;
+            const height = img.height;
+            // 获取EXIF信息以检查图像的方向
+            // EXIF.getData(img, () => {
+            //     console.log("🚀 ~ file: index.js:940 ~ PhotoClip ~ EXIF.getData ~ img:", img)
+            //     const orientation = EXIF.getTag(img, 'Orientation');
+
+            //     // 设置画布尺寸
+            //     canvas.width = width;
+            //     canvas.height = height;
+
+            //     // 根据 EXIF 信息中的 Orientation 修正图像方向
+            //     switch (orientation) {
+            //         case 2:
+            //             // horizontal flip
+            //             ctx.translate(width, 0);
+            //             ctx.scale(-1, 1);
+            //             break;
+            //         case 3:
+            //             // 180° rotate left
+            //             ctx.translate(width, height);
+            //             ctx.rotate(Math.PI);
+            //             break;
+            //         case 4:
+            //             // vertical flip
+            //             ctx.translate(0, height);
+            //             ctx.scale(1, -1);
+            //             break;
+            //         case 5:
+            //             // vertical flip + 90 rotate right
+            //             canvas.width = height;
+            //             canvas.height = width;
+            //             ctx.rotate(0.5 * Math.PI);
+            //             ctx.scale(1, -1);
+            //             break;
+            //         case 6:
+            //             // 90° rotate right
+            //             canvas.width = height;
+            //             canvas.height = width;
+            //             ctx.rotate(0.5 * Math.PI);
+            //             ctx.translate(0, -height);
+            //             break;
+            //         case 7:
+            //             // horizontal flip + 90 rotate right
+            //             canvas.width = height;
+            //             canvas.height = width;
+            //             ctx.rotate(0.5 * Math.PI);
+            //             ctx.translate(width, -height);
+            //             ctx.scale(-1, 1);
+            //             break;
+            //         case 8:
+            //             // 90° rotate left
+            //             canvas.width = height;
+            //             canvas.height = width;
+            //             ctx.rotate(-0.5 * Math.PI);
+            //             ctx.translate(-width, 0);
+            //             break;
+            //         default:
+            //             ctx.drawImage(img, 0, 0);
+            //             break;
+            //     }
+
+            //     ctx.drawImage(img, 0, 0);
+
+            //     const fixedBase64 = canvas.toDataURL('image/jpeg');
+
+            //     // 创建修正后的图像
+            //     this._$img.src = fixedBase64;
+
+            //     // 调用loadComplete回调
+            //     options.loadComplete.call(this, img);
+
+            //     this._$rotateLayer.appendChild(img);
+            //     this._rotateLayerWidth = img.naturalWidth;
+            //     this._rotateLayerHeight = img.naturalHeight;
+            //     css(this._$rotateLayer, {
+            //         'width': this._rotateLayerWidth,
+            //         'height': this._rotateLayerHeight
+            //     });
+
+            //     hideAction([img, this._$moveLayer], this._resetScroll);
+            // });
+        };
+
+        this._$img.onerror = e => {
+            options.loadError.call(this, errorMsg.imgLoadError, e);
+        };
+
+        attr(this._$img, 'src', src);
+    }
+
+
+    _clipImg() {
+        const options = this._options,
+            errorMsg = options.errorMsg;
+        // 检查图像是否加载
         if (!this._imgLoaded) {
             options.fail.call(this, errorMsg.noImg);
             return;
         }
-
+        // 根据裁剪区域和缩放比例在画布上绘制图像
         const local = utils.loaclToLoacl(this._$moveLayer, this._$clipLayer),
             scale = this._iScroll.scale,
             ctx = this._canvas.getContext('2d');
@@ -874,7 +1074,7 @@ export default class PhotoClip {
                     css($view, 'background-image', `url(${dataURL})`);
                 });
             }
-
+            // 将裁剪后的图像转换为 dataURL，并调用 done 回调
             options.done.call(this, dataURL);
 
             return dataURL;

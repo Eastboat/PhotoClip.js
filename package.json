@@ -11,14 +11,14 @@
     "!.DS_Store"
   ],
   "scripts": {
-    "dev": "USER_CONFIG=mod.config.js webpack-dev-server --config node_modules/@module-factory/service/webpack.config/dev.js",
+    "dev": "USER_CONFIG=mod.config.js webpack-dev-server --config node_modules/@module-factory/service/webpack.config/dev.js --host 0.0.0.0",
     "build": "USER_CONFIG=mod.config.js webpack --config node_modules/@module-factory/service/webpack.config/prod.js"
   },
   "dependencies": {
     "@module-factory/utils": "latest",
     "hammerjs": "^2.0.8",
     "iscroll": "baijunjie/iscroll",
-    "lrz": "^4.9.40"
+    "lrz": "4.9.41"
   },
   "devDependencies": {
     "@module-factory/service": "latest",

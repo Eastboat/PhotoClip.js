@@ -1,67 +1,143 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
-<title><%= htmlWebpackPlugin.options.title %></title>
-<style>
-body {
-	margin: 0;
-	text-align: center;
-}
-#clipArea {
-	height: 300px;
-}
-#file,
-#clipBtn {
-	margin: 20px;
-}
-#view {
-	margin: 0 auto;
-	width: 200px;
-	height: 200px;
-	background-color: #666;
-}
-</style>
-</head>
-<body ontouchstart="">
-<div id="clipArea"></div>
-<input type="file" id="file">
-<button id="clipBtn">截取</button>
-<div id="view"></div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui"
+    />
+    <title><%= htmlWebpackPlugin.options.title %></title>
+    <style>
+      body {
+        margin: 0;
+        text-align: center;
+      }
+      /* #clipArea {
+        height: 300px;
+      }
+      #file,
+      #clipBtn {
+        margin: 20px;
+      } */
+      #view {
+        margin: 0 auto;
+        width: 26.667vw;
+        height: 26.667vw;
+        background-color: #666;
+      }
+    </style>
+      <link href="/assets/test/photoClip/css/photoClip.css" rel="stylesheet" />
+  </head>
+  <body >
+    <!--  -->
+    <!-- <div id="clipArea"></div>
+    <input type="file" id="file" />
+    <button id="clipBtn">截取</button> -->
+    <!-- <div id="view"></div> -->
+    
+  <!-- my project test -->
+  <button class="chooseImgBtn chooseImgBtn1">点击测试</button>
+    <div class="jq22-container cover-wrap" >
+      <h6 class="rotateTips">两指可旋转图片(或在本地旋转后上传图片)</h6>
+      <div id="clipArea">
+        <div id="lei">
+        </div>
+      </div>
+      <div class="foot-use">
+        <div class="uploader1 blue">
+          <input type="button" name="file" class="button" value="选择图片">
+          <!-- @*<input id="file" type="file" accept="image/*" multiple />*@ -->
+          <input id="file" type="file" accept="image/*" />
+        </div>
+        <button id="clipCancle"></button>
+        <button id="clipBtn"></button>
+      </div>
+    </div>
+  <div id="view"></div>
+    
+  <!-- my project test -->
+    <script src="/assets/js/jquery-3.1.0.min.js"></script>
+    <script src="js/vconsole.min.js"></script>
+    <script src="/assets/test/photoClip/js/hammer.min.js"></script>
+    <script src="/assets/test/photoClip/js/iscroll-zoom-min.js"></script>
+    <!-- <script src="/assets/test/photoClip/js/lrz.all.bundle.js"></script> -->
+    <script src="/assets/test/photoClip/js/PhotoClipV6.js"></script>
+    <!-- FIX之后的代码 -->
+    <!-- <script src="js/hammer.min.js"></script> -->
+    <!-- <script src="js/iscroll-zoom-min.js"></script> -->
+    <script src="js/lrz.all.bundle.fix.js"></script> 
+    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script> -->
+    <% for (var chunk in htmlWebpackPlugin.files.chunks) { %>
+    <script src="<%= htmlWebpackPlugin.files.chunks[chunk].entry %>"></script>
+    <% } %>
+    <script>
+      const vConsole = new VConsole();
+      var canvas_w = 310, canvas_h = 462;
+      if (window.innerWidth) {
 
-<script src="js/hammer.min.js"></script>
-<script src="js/iscroll-zoom-min.js"></script>
-<script src="js/lrz.all.bundle.js"></script>
-<% for (var chunk in htmlWebpackPlugin.files.chunks) { %>
-<script src="<%= htmlWebpackPlugin.files.chunks[chunk].entry %>"></script>
-<% } %>
-<script>
-	var pc = new PhotoClip('#clipArea', {
-		size: [260, 260],
-		outputSize: 640,
-		//adaptive: ['60%', '80%'],
-		file: '#file',
-		view: '#view',
-		ok: '#clipBtn',
-		//img: 'img/mm.jpg',
-		loadStart: function() {
-			console.log('开始读取照片');
-		},
-		loadComplete: function() {
-			console.log('照片读取完成');
-		},
-		done: function(dataURL) {
-			console.log(dataURL);
-		},
-		fail: function(msg) {
-			alert(msg);
-		}
-	});
+        canvas_w = window.innerWidth - 10;
+        canvas_h = (window.innerWidth - 10) / 0.67;
+      }
+      var imgsource = ''
+      var result_img = "";
+      var pc = new PhotoClip("#clipArea", {
+        // size: [260, 760], //截取框大小。 当值为数组时，数组中索引[0]和[1]所对应的值分别表示宽和高。
+        size: [canvas_w, canvas_h], //截取框大小。 当值为数组时，数组中索引[0]和[1]所对应的值分别表示宽和高。
+        // outputSize: [0,0],// 输出图像大小。当值为数字时，表示输出宽度，此时高度根据截取框比例自适应。
+        //adaptive: ['60%', '80%'],
+        file: "#file",
+        view: "#view",
+        ok: "#clipBtn",
+        //img: 'img/mm.jpg',
+        loadStart: function () {
+          console.log("开始读取照片");
+        },
+        loadComplete: function () {
+          // console.log("照片读取完成");
+          $('.cover-wrap').show();
+          $("#file").val("");
+        },
+        done: function (dataURL) {
+          console.log(dataURL);
+          $('.cover-wrap').hide();
+          imgsource = dataURL;
+          $(".photo-clip-rotate-layer img").attr('src', '');
+        },
+        fail: function (msg) {
+          alert(msg);
+        },
+      });
 
-	// 加载的图片必须要与本程序同源，否则无法截图
-	pc.load('img/mm.jpg');
+      // 加载的图片必须要与本程序同源，否则无法截图
+      // pc.load("img/mm.jpg");
 
-</script>
-</body>
+
+      $("#clipCancle").click(function () {
+          $(".jq22-container").hide();
+          $(".photo-clip-rotate-layer img").attr('src', '');
+        })
+
+      var length = $(".chooseImgBtn").length;
+      if (length > 0)
+        for (var i = 0; i < length; i++) {
+          var classString = ".chooseImgBtn" + (i + 1)
+          $(classString).click(function () {
+            $(".jq22-container").show();
+            result_img = $(this).parent();
+          })
+        }
+
+      $("#clipBtn").click(function () {
+        var month = $(result_img).attr("month");
+        var param = $("#param").val();
+        if (imgsource != '') {
+          $(".maskLoading").addClass("show");
+            $(result_img).addClass('HasImg').find('.img').empty().append('<img id="img_' + month + '" src="' + imgsource + '" align="absmiddle">');
+            imgsource = "";
+          $(".jq22-container").hide();
+        
+        }
+      });
+    </script>
+  </body>
 </html>
